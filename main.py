@@ -10,7 +10,6 @@ from technical_indicators import TechnicalIndicators
 from signal_generator import SignalGenerator
 from backtester import Backtester
 from google_sheets_logger import GoogleSheetsLogger
-from telegram_alerts import TelegramAlerts
 from visualizer import Visualizer
 
 class TradingSystem:
@@ -35,7 +34,6 @@ class TradingSystem:
         self.signal_generator = SignalGenerator(config_file)
         self.backtester = Backtester(config_file)
         self.sheets_logger = GoogleSheetsLogger(config_file)
-        self.telegram_alerts = TelegramAlerts(config_file)
         self.visualizer = Visualizer(config_file)
         
         self.logger.info("Trading system initialized successfully")
@@ -81,15 +79,11 @@ class TradingSystem:
             self.logger.info("Step 7: Logging to Google Sheets...")
             self._log_to_sheets(backtest_results, current_signals, portfolio_summary)
             
-            # Step 8: Send Telegram alerts
-            self.logger.info("Step 8: Sending Telegram alerts...")
-            self._send_telegram_alerts(current_signals, portfolio_summary, backtest_results)
-            
-            # Step 9: Generate visualizations
-            self.logger.info("Step 9: Generating visualizations...")
+            # Step 8: Generate visualizations
+            self.logger.info("Step 8: Generating visualizations...")
             self._generate_visualizations(backtest_results, indicators_data, all_signals)
             
-            # Step 10: Print summary
+            # Step 9: Print summary
             self._print_summary(backtest_results, current_signals, portfolio_summary)
             
             self.logger.info("Complete trading analysis finished successfully!")
@@ -98,13 +92,6 @@ class TradingSystem:
         except Exception as e:
             self.logger.error(f"Error in complete analysis: {str(e)}")
             self.logger.error(traceback.format_exc())
-            
-            # Send error alert
-            try:
-                self.telegram_alerts.send_error_alert(str(e))
-            except:
-                pass
-            
             return False
     
     def _log_to_sheets(self, backtest_results, current_signals, portfolio_summary):
@@ -125,23 +112,6 @@ class TradingSystem:
                 
         except Exception as e:
             self.logger.error(f"Error logging to sheets: {str(e)}")
-    
-    def _send_telegram_alerts(self, current_signals, portfolio_summary, backtest_results):
-        """Send Telegram alerts."""
-        try:
-            # Send current signals
-            for signal in current_signals.values():
-                self.telegram_alerts.send_signal_alert(signal)
-            
-            # Send portfolio update
-            if portfolio_summary:
-                self.telegram_alerts.send_portfolio_update(portfolio_summary)
-            
-            # Send daily summary
-            self.telegram_alerts.send_daily_summary(backtest_results, current_signals)
-            
-        except Exception as e:
-            self.logger.error(f"Error sending Telegram alerts: {str(e)}")
     
     def _generate_visualizations(self, backtest_results, indicators_data, all_signals):
         """Generate and save visualizations."""
@@ -224,10 +194,6 @@ class TradingSystem:
             # Check current signals
             current_indicators = self.indicators.get_current_indicators(indicators_data)
             current_signals = self.signal_generator.check_current_signals(current_indicators)
-            
-            # Send alerts for new signals
-            for signal in current_signals.values():
-                self.telegram_alerts.send_signal_alert(signal)
             
             self.logger.info(f"Daily monitoring completed. Found {len(current_signals)} signals.")
             return True

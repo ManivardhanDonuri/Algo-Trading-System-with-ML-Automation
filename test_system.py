@@ -129,7 +129,7 @@ def test_config():
         with open('config.json', 'r') as f:
             config = json.load(f)
         
-        required_keys = ['telegram', 'google_sheets', 'trading']
+        required_keys = ['google_sheets', 'trading']
         for key in required_keys:
             if key not in config:
                 print(f"❌ Configuration: Missing {key} section")

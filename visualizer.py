@@ -101,7 +101,7 @@ class Visualizer:
             for bar, pnl in zip(bars1, total_pnl):
                 height = bar.get_height()
                 ax1.text(bar.get_x() + bar.get_width()/2., height,
-                        f'₹{pnl:.0f}', ha='center', va='bottom' if pnl >= 0 else 'top')
+                        f'₹{pnl:.0f}', ha='center', va='bottom' if height >= 0 else 'top')
             
             # Plot 2: Win Rate by symbol
             bars2 = ax2.bar(symbols, win_rates, color='skyblue', alpha=0.7)
@@ -116,9 +116,9 @@ class Visualizer:
                 ax2.text(bar.get_x() + bar.get_width()/2., height,
                         f'{rate:.1f}%', ha='center', va='bottom')
             
-            # Plot 3: Number of trades by symbol
+            # Plot 3: Total Trades by symbol
             bars3 = ax3.bar(symbols, total_trades, color='orange', alpha=0.7)
-            ax3.set_title('Number of Trades by Symbol', fontsize=12, fontweight='bold')
+            ax3.set_title('Total Trades by Symbol', fontsize=12, fontweight='bold')
             ax3.set_ylabel('Number of Trades', fontsize=10)
             ax3.tick_params(axis='x', rotation=45)
             
@@ -128,7 +128,7 @@ class Visualizer:
                 ax3.text(bar.get_x() + bar.get_width()/2., height,
                         f'{trades}', ha='center', va='bottom')
             
-            # Plot 4: Average holding days by symbol
+            # Plot 4: Average Holding Days by symbol
             bars4 = ax4.bar(symbols, avg_holding_days, color='purple', alpha=0.7)
             ax4.set_title('Average Holding Days by Symbol', fontsize=12, fontweight='bold')
             ax4.set_ylabel('Days', fontsize=10)
@@ -254,43 +254,23 @@ class Visualizer:
 
 if __name__ == "__main__":
     # Test the visualizer
-    from data_fetcher import DataFetcher
+    import yfinance as yf
+    from datetime import datetime, timedelta
     from technical_indicators import TechnicalIndicators
     from signal_generator import SignalGenerator
-    from backtester import Backtester
     
-    # Fetch data and calculate indicators
-    fetcher = DataFetcher()
-    data = fetcher.fetch_all_stocks_data()
+    # Get sample data
+    stock = yf.Ticker("RELIANCE.NS")
+    data = stock.history(start=datetime.now() - timedelta(days=180), end=datetime.now())
     
+    # Calculate indicators
     indicators = TechnicalIndicators()
-    indicators_data = indicators.calculate_all_indicators(data)
+    indicators_data = indicators.calculate_indicators(data)
     
     # Generate signals
     signal_gen = SignalGenerator()
-    all_signals = signal_gen.generate_signals(indicators_data)
+    signals = signal_gen._generate_stock_signals("RELIANCE.NS", indicators_data)
     
-    # Run backtest
-    backtester = Backtester()
-    results = backtester.run_backtest(indicators_data, all_signals)
-    
-    # Create visualizations
+    # Test visualization
     visualizer = Visualizer()
-    
-    # Plot portfolio performance
-    visualizer.plot_portfolio_performance(results)
-    
-    # Plot cumulative returns
-    visualizer.plot_cumulative_returns(results)
-    
-    # Plot win/loss distribution
-    visualizer.plot_win_loss_distribution(results)
-    
-    # Plot individual stock with signals (for first stock)
-    if data and indicators_data:
-        first_symbol = list(data.keys())[0]
-        visualizer.plot_stock_with_signals(
-            first_symbol, 
-            indicators_data[first_symbol], 
-            all_signals.get(first_symbol, [])
-        ) 
+    visualizer.plot_stock_with_signals("RELIANCE.NS", indicators_data, signals) 
